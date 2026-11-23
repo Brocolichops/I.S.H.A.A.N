@@ -1,21 +1,21 @@
+import * as Location from "expo-location";
 import { useFocusEffect } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
-  Platform,
 } from "react-native";
-import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as Location from "expo-location";
 
-import { ensureAnonymousUser, supabase } from "@/lib/supabase";
 import { getPlaceName } from "@/lib/place-name";
+import { getUserId, supabase } from "@/lib/supabase";
 
 const PAGE_SIZE = 25;
 
@@ -78,7 +78,7 @@ export default function HistoryScreen() {
     const from = reset ? 0 : nextOffset.current;
 
     try {
-      const userId = await ensureAnonymousUser();
+      const userId = await getUserId();
       const { data, error } = await supabase
         .from("driver_sessions_readable")
         .select(
