@@ -1,11 +1,13 @@
-import { StatusBar } from "expo-status-bar";
 import * as Location from "expo-location";
+import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { ensureAnonymousUser, supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
+import { getUserId, supabase } from "@/lib/supabase";
 
 export default function App() {
+  const { session, signOut } = useAuth();
   const [isStarted, setIsStarted] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isRestoring, setIsRestoring] = useState(true);
@@ -17,7 +19,7 @@ export default function App() {
 
     const restoreActiveSession = async () => {
       try {
-        const userId = await ensureAnonymousUser();
+        const userId = await getUserId();
         const { data, error } = await supabase
           .from("driver_sessions")
           .select("id")
@@ -73,7 +75,7 @@ export default function App() {
         accuracy: Location.Accuracy.High,
       });
 
-      const userId = await ensureAnonymousUser();
+      const userId = await getUserId();
       if (action === "start") {
         const { data, error } = await supabase
           .from("driver_sessions")
@@ -129,10 +131,28 @@ export default function App() {
       setIsLocating(false);
     }
   };
-
+const handleSignOut = async () => {
+  try {
+    await signOut();
+  } catch (error) {
+    setErrorMessage(`Unable to sign out: ${getErrorMessage(error)}`);
+  }
+};
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
+      <View style={styles.accountBar}>
+        <Text numberOfLines={1} style={styles.accountEmail}>
+          {session?.user.email}
+          </Text>
+          <Pressable
+          accessibilityRole="button"
+          disabled={isLocating}
+          onPress={() => void handleSignOut()}
+          >
+            <Text style={styles.signOutText}>Sign out</Text>
+            </Pressable>
+            </View>
 
       <View style={styles.circleContainer}>
         <View style={styles.circle}>
@@ -184,6 +204,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center"
   },
+  accountBar: {
+  alignItems: "center",
+  flexDirection: "row",
+  gap: 12,
+  justifyContent: "space-between",
+  left: 24,
+  position: "absolute",
+  right: 24,
+  top: 56,
+},
+accountEmail: { color: "#9CA3AF", flex: 1, fontSize: 13 },
+signOutText: { color: "#27B4F5", fontSize: 14, fontWeight: "600" },
   circleContainer: {
     marginBottom: 40
   },

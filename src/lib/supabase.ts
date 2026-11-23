@@ -41,24 +41,16 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
   },
 });
 
-export async function ensureAnonymousUser(): Promise<string> {
-  const { data: sessionData, error: sessionError } =
-    await supabase.auth.getSession();
-  if (sessionError) {
-    throw sessionError;
-  }
-
-  if (sessionData.session) {
-    return sessionData.session.user.id;
-  }
-
-  const { data, error } = await supabase.auth.signInAnonymously();
+export async function getUserId(): Promise<string> {
+  const { data, error } = await supabase.auth.getSession();
   if (error) {
     throw error;
   }
-  if (!data.user) {
-    throw new Error("Supabase did not return an anonymous user.");
+
+  const user = data.session?.user;
+  if (!user || user.is_anonymous) {
+    throw new Error("You are not signed in.");
   }
 
-  return data.user.id;
+  return user.id;
 }
